@@ -69,15 +69,106 @@ Votre mission (si vous l'acceptez) : Concevoir une architecture **API-driven** d
 Séquence 4 : Documentation  
 Difficulté : Facile (~30 minutes)
 ---------------------------------------------------
-**Complétez et documentez ce fichier README.md** pour nous expliquer comment utiliser votre solution.  
-Faites preuve de pédagogie et soyez clair dans vos expliquations et processus de travail.  
+# Guide de Déploiement LocalStack et AWS Lambda
+
+## Sommaire
+1. [Séquence 1 : Préparation de l'environnement AWS](#séquence-1--préparation-de-lenvironnement-aws-localstack)
+2. [Séquence 2 : Détails des commandes fondamentales](#séquence-2--détails-des-commandes-fondamentales)
+3. [Séquence 3 : Guide d'utilisation du Makefile](#séquence-3--guide-dutilisation-du-makefile)
+
+---
+
+## Séquence 1 : Préparation de l'environnement AWS (LocalStack)
+**Objectif :** Créer l'environnement AWS simulé avec LocalStack dans le terminal du Codespace.
+
+### Création du dossier de travail
+```bash
+sudo -i mkdir rep_localstack
+```
+
+### Création de l'environnement virtuel Python
+```bash
+sudo -i python3 -m venv ./rep_localstack
+```
+
+### Installation des dépendances et de LocalStack
+```bash
+sudo -i pip install --upgrade pip && python3 -m pip install localstack && export S3_SKIP_SIGNATURE_VALIDATION=0
+```
+
+### Démarrage de l'émulateur en arrière-plan
+```bash
+localstack start -d
+```
+
+### Vérification de la santé des services
+Cette commande confirme que les services EC2, Lambda et API Gateway sont opérationnels avant de commencer le déploiement.
+```bash
+curl http://localhost:4566/_localstack/health
+```
+
+---
+
+## Séquence 2 : Détails des commandes fondamentales
+Ces étapes permettent de configurer l'infrastructure manuellement pour comprendre le flux de travail et les dépendances.
+
+### Gestion de l'URL dynamique Codespaces
+Pour supprimer toute dépendance au localhost,  nous construisons une URL publique qui s'adapte automatiquement au nom de votre Codespace.
+```bash
+PUBLIC_ENDPOINT="https://${CODESPACE_NAME}-4566.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+```
+
+### Préparation de la fonction Lambda
+Le code Python est compressé au format ZIP, format requis par AWS Lambda.
+```bash
+zip function.zip lambda_function.py
+```
+
+### Nettoyage préventif
+Nous supprimons systématiquement l'ancienne version de la fonction pour éviter les erreurs de conflit si elle existe déjà.
+```bash
+aws --endpoint-url=$PUBLIC_ENDPOINT lambda delete-function --function-name ControlEC2 2>/dev/null || true
+```
+
+### Déploiement de la fonction
+Envoi de la fonction vers l'émulateur LocalStack avec les configurations d'exécution (runtime Python 3.9).
+```bash
+aws --endpoint-url=$PUBLIC_ENDPOINT lambda create-function --function-name ControlEC2 --runtime python3.9 --handler lambda_function.lambda_handler --role arn:aws:iam::000000000000:role/lambda-role --zip-file fileb://function.zip
+```
+
+### Supervision de l'instance EC2
+Cette commande affiche un tableau récapitulatif pour vérifier le changement d'état (running ou stopped) de vos instances directement dans le terminal.
+```bash
+aws --endpoint-url=$PUBLIC_ENDPOINT ec2 describe-instances --query 'Reservations[*].Instances[*].{ID:InstanceId,State:State.Name}' --output table
+```
+
+---
+
+## Séquence 3 : Guide d'utilisation du Makefile
+Le Makefile automatise la gestion du projet pour répondre aux critères de notation sur l'automatisation.
+
+### Déployer l'infrastructure
+Cette commande lance le script complet qui crée l'instance, la Lambda et configure les accès API.
+```bash
+make deploy
+```
+
+### Générer les URLs de pilotage
+Affiche les liens publics (start, stop, status) pour tester le pilotage directement dans votre navigateur.
+```bash
+make urls
+```
+
+### Vérifier le statut
+Affiche l'état actuel des instances directement dans votre terminal.
+```bash
+make status
+```
+
+### Nettoyer le projet
+Supprime les fichiers temporaires et les archives zip inutiles.
+```bash
+make clean 
    
 ---------------------------------------------------
-Evaluation
----------------------------------------------------
-Cet atelier, **noté sur 20 points**, est évalué sur la base du barème suivant :  
-- Repository exécutable sans erreur majeure (4 points)
-- Fonctionnement conforme au scénario annoncé (4 points)
-- Degré d'automatisation du projet (utilisation de Makefile ? script ? ...) (4 points)
-- Qualité du Readme (lisibilité, erreur, ...) (4 points)
-- Processus travail (quantité de commits, cohérence globale, interventions externes, ...) (4 points) 
+
