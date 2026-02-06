@@ -113,7 +113,7 @@ curl http://localhost:4566/_localstack/health
 Ces étapes permettent de configurer l'infrastructure manuellement pour comprendre le flux de travail et les dépendances.
 
 ### Gestion de l'URL dynamique Codespaces
-Pour supprimer toute dépendance au localhost, nous construisons une URL publique qui s'adapte automatiquement au nom de votre Codespace.
+Pour supprimer toute dépendance au localhost,  nous construisons une URL publique qui s'adapte automatiquement au nom de votre Codespace.
 ```bash
 PUBLIC_ENDPOINT="https://${CODESPACE_NAME}-4566.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
 ```
