@@ -31,7 +31,9 @@ sudo -i python3 -m venv ./rep_localstack
 ```
 sudo -i pip install --upgrade pip && python3 -m pip install localstack && export S3_SKIP_SIGNATURE_VALIDATION=0
 ```
+Rendez-vous chez Localstack pour vous créez un Token : https://app.localstack.cloud/
 ```
+localstack auth set-token <YOUR_AUTH_TOKEN>
 localstack start -d
 ```
 **vérification des services disponibles**  
